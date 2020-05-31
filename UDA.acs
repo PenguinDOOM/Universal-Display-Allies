@@ -1,0 +1,179 @@
+#library "UDA"
+#include "zcommon.h.bcs"
+#define GAME_NET_TEAMGAME 4
+
+
+int PlayerTID[64];
+int Team[64];
+
+
+//------------------------------------------------------------------------------
+//Original code by Isle
+function void HudMessageOnActor(int tid, int msgID, int hudX, int hudY, int xOffset, int yOffset, int range, str sprite, str text, int holdTime, str colour)
+{
+		
+	int dist, angle, vang, pitch, x, y;
+	
+	if (holdTime == 0) { holdTime = 0.1; }	
+	if (hudX == 0) { hudX = 640; }
+	if (hudY == 0) { hudY = 480; }
+	
+	if(sprite != -1)
+	{
+		
+		SetFont(sprite);
+		text = "A";
+		
+	}
+	
+	SetHudSize(hudX, hudY, 1);
+	x = GetActorX(tid) - GetActorX(0);
+	y = GetActorY(tid) - GetActorY(0);
+	
+	vang = VectorAngle(x,y);
+	angle = (vang - GetActorAngle(0) + 1.0) % 1.0;
+	
+	if(((vang+0.125)%0.5) > 0.25) dist = FixedDiv(y, sin(vang));
+	else dist = FixedDiv(x, cos(vang));
+	
+	if ((angle < 0.23 || angle > 0.85) && (dist >> 16) < range)
+	{
+		
+		if (GetActorPitch(0) >= -0.5 && GetActorPitch(0) <= 0.5)
+		{
+ 
+			pitch = VectorAngle(dist, GetActorZ(tid) - (GetActorZ(0) + GetActorViewHeight(0)));
+			pitch += FixedMul(GetActorPitch(0), 1.2) % 1.0;
+ 
+			if ((hudX/2) * sin(angle) != 0 && cos(angle) != 0 && (hudX/2) * sin(pitch) != 0 && cos(pitch) != 0)
+			{
+				
+				x = hudX/2 - ((hudX/2) * sin(angle) / cos(angle));
+				y = hudY/2 - ((HUDX/2) * sin(pitch) / cos(pitch));
+				
+				x+=xOffset;
+				y+=yOffset;
+				
+				HudMessage(s:text; HUDMSG_PLAIN | HUDMSG_NOTWITHFULLMAP | HUDMSG_NOTWITHOVERLAYMAP | HUDMSG_LAYER_UNDERHUD, msgID, colour, (x << 16), (y << 16), holdTime);
+				
+			}
+			
+		}
+		
+	}
+	
+}
+//------------------------------------------------------------------------------
+
+Script "Player_ID1" (void) ENTER
+{
+	if(GameType() == GAME_TITLE_MAP)
+		terminate;
+	Delay(35);
+	int TID = ActivatorTID();
+	if(TID == 0)
+		Thing_ChangeTID(0, UniqueTID());
+	int PTID;
+	int PT;
+	int PID = PlayerNumber();
+	for (int i = 0; i <= 64; i++) {
+		if(PlayerInGame(i)) {
+			SetActivatorToPlayer(i);
+			PTID = ActivatorTID();
+			PT = PlayerTeam();
+			SetActivatorToPlayer(PID);
+			Team[i] = PT;
+			PlayerTID[i] = PTID;
+			ACS_NamedExecuteAlways("Sync_ID", 0, i, PTID, PT);
+			SetActivatorToPlayer(i);
+			ACS_NamedExecuteAlways("Sync_ID", 0, i, PTID, PT);
+			SetActivatorToPlayer(PID);
+		}
+	Delay(1);
+	}
+	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
+}
+
+Script "Player_ID2" (void) RESPAWN
+{
+	if(GameType() == GAME_TITLE_MAP)
+		terminate;
+	Delay(2);
+	int TID = ActivatorTID();
+	if(TID == 0)
+		Thing_ChangeTID(0, UniqueTID());
+	int PTID;
+	int PT;
+	int PID = PlayerNumber();
+	for (int i = 0; i <= 64; i++) {
+		if(PlayerInGame(i)) {
+			SetActivatorToPlayer(i);
+			PTID = ActivatorTID();
+			PT = PlayerTeam();
+			SetActivatorToPlayer(PID);
+			Team[i] = PT;
+			PlayerTID[i] = PTID;
+			ACS_NamedExecuteAlways("Sync_ID", 0, i, PTID, PT);
+		}
+	Delay(1);
+	}
+}
+
+Script "Sync_ID" (int i, int j, int k) CLIENTSIDE
+{
+	PlayerTID[i] = j;
+	Team[i] = k;
+}
+
+Script "Player_HUD" (void) CLIENTSIDE
+{
+	int PT = PlayerTeam();
+	Delay(100);
+	while(true) {
+		for (int i = 0; i <= 64; i++) {
+			if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
+				if(GetUserCVar(PlayerNumber(), "uda_name") == True){
+					ACS_NamedExecuteAlways("Name_HUD", 0, 0, 0, 0);
+					terminate;
+				} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
+					hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, "allya0", "", 0.1, CR_GREEN);
+				} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
+					if(PT == Team[i])
+						hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, "allya0", "", 0.1, CR_GREEN);
+				} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
+					terminate;
+				} else {
+					terminate;
+				}
+			}
+		}
+		Delay(1);
+	}
+}
+
+Script "Name_HUD" (void) CLIENTSIDE
+{
+	int PT = PlayerTeam();
+	Delay(100);
+	while(true) {
+		for (int i = 0; i <= 64; i++) {
+			if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
+				if(GetUserCVar(PlayerNumber(), "uda_name") == False){
+					ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
+					terminate;
+				} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
+					hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, -1, StrParam(n:i+1), 0.1, CR_GREEN);
+				} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
+					if(PT == Team[i])
+						hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, -1, StrParam(n:i+1), 0.1, CR_GREEN);
+				} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
+					terminate;
+				} else {
+					terminate;
+				}
+			}
+		}
+		Delay(1);
+	}
+}
+
