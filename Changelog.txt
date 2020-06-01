@@ -1,3 +1,10 @@
+v2_beta
+--------------------------------------------------------------------------------
++ Added enable/disable switch. (Additional CVar "uda_enable")
+* Changed the for loops in the Enter and Respawn scripts to separate methoads.
+* Changed some codes. 
+
+
 v1_beta
 --------------------------------------------------------------------------------
 + First public beta
