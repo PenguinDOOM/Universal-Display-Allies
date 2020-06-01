@@ -130,20 +130,22 @@ Script "Player_HUD" (void) CLIENTSIDE
 	int PT = PlayerTeam();
 	Delay(100);
 	while(true) {
-		for (int i = 0; i <= 64; i++) {
-			if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
-				if(GetUserCVar(PlayerNumber(), "uda_name") == True){
-					ACS_NamedExecuteAlways("Name_HUD", 0, 0, 0, 0);
-					terminate;
-				} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
-					hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, "allya0", "", 0.1, CR_GREEN);
-				} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
-					if(PT == Team[i])
+		if(GetUserCVar(PlayerNumber(), "uda_enable") {
+			for (int i = 0; i <= 64; i++) {
+				if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
+					if(GetUserCVar(PlayerNumber(), "uda_name") == True){
+						ACS_NamedExecuteAlways("Name_HUD", 0, 0, 0, 0);
+						terminate;
+					} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
 						hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, "allya0", "", 0.1, CR_GREEN);
-				} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
-					terminate;
-				} else {
-					terminate;
+					} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
+						if(PT == Team[i])
+							hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, "allya0", "", 0.1, CR_GREEN);
+					} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
+						terminate;
+					} else {
+						terminate;
+					}
 				}
 			}
 		}
@@ -156,20 +158,22 @@ Script "Name_HUD" (void) CLIENTSIDE
 	int PT = PlayerTeam();
 	Delay(100);
 	while(true) {
-		for (int i = 0; i <= 64; i++) {
-			if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
-				if(GetUserCVar(PlayerNumber(), "uda_name") == False){
-					ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
-					terminate;
-				} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
-					hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, -1, StrParam(n:i+1), 0.1, CR_GREEN);
-				} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
-					if(PT == Team[i])
+		if(GetUserCVar(PlayerNumber(), "uda_enable") {
+			for (int i = 0; i <= 64; i++) {
+				if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
+					if(GetUserCVar(PlayerNumber(), "uda_name") == False){
+						ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
+						terminate;
+					} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
 						hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, -1, StrParam(n:i+1), 0.1, CR_GREEN);
-				} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
-					terminate;
-				} else {
-					terminate;
+					} else if(GetCvar("TeamPlay") || GetCvar("TeamPossession") || GetCvar("TeamLMS") || GetCvar("CTF") || GetCvar("OneFlagCTF") || GetCvar("SkullTag") || GetCvar("TeamGame") || GetCvar("Domination")) {
+						if(PT == Team[i])
+							hudmessageonactor(PlayerTID[i], i, 640, 480, 0, -10, 8192, -1, StrParam(n:i+1), 0.1, CR_GREEN);
+					} else if(GetCvar("deathmatch") || GetCvar("Terminator") || GetCvar("Possession") || GetCvar("LastManStanding") || GetCvar("Duel")) {
+						terminate;
+					} else {
+						terminate;
+					}
 				}
 			}
 		}
