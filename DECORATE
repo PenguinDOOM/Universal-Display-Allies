@@ -1,0 +1,19 @@
+Actor NULLACTOR
+{
+	-SOLID
+	+THRUACTORS
+	+NONSHOOTABLE
+	+NOTARGET
+	States
+	{
+	Spawn:
+		TNT1 A 35
+		Stop
+	}
+}
+
+Actor RequestDone : Inventory
+{
+	Inventory.MaxAmount 1
+	Inventory.InterHubAmount 0
+}
