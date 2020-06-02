@@ -2,7 +2,6 @@
 
 #library "UDA"
 #include "zcommon.h.bcs"
-#define GAME_NET_TEAMGAME 4
 
 
 int PlayerTID[64];
@@ -74,19 +73,15 @@ Script "Player_ID1" (void) ENTER
 	Delay(35);
 	int TID;
 	int PID = PlayerNumber();
+	if(!PlayerInGame(PID))
+		terminate;
 	Team[PID] = PlayerTeam();
 	PlayerTID[PID] = ActivatorTID();
 	if(PlayerTID[PID] == 0)
 		Thing_ChangeTID(0, UniqueTID());
 	PlayerTID[PID] = ActivatorTID();
-	TID = UniqueTID();
-	SpawnForced("NULLACTOR", GetActorX(0), GetActorY(0), GetActorZ(0), TID, 0);
-	SetActivator(TID);
-	SetPointer(AAPTR_NULL, 0);
-	SetActivatorToPlayer(PID);
-	SetActivator(TID);
+	SetActivator(0, AAPTR_NULL);
 	ACS_NamedExecuteAlways("Sync_ID1", 0, PID, PlayerTID[PID], Team[PID]);
-	Thing_Remove(TID);
 	SetActivatorToPlayer(PID);
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
@@ -98,35 +93,37 @@ Script "Player_ID2" (void) RESPAWN
 	Delay(35);
 	int TID;
 	int PID = PlayerNumber();
+	if(!PlayerInGame(PID))
+		terminate;
 	Team[PID] = PlayerTeam();
 	PlayerTID[PID] = ActivatorTID();
 	if(PlayerTID[PID] == 0)
 		Thing_ChangeTID(0, UniqueTID());
 	PlayerTID[PID] = ActivatorTID();
-	TID = UniqueTID();
-	SpawnForced("NULLACTOR", GetActorX(0), GetActorY(0), GetActorZ(0), TID, 0);
-	SetActivator(TID);
-	SetPointer(AAPTR_NULL, 0);
-	SetActivatorToPlayer(PID);
-	SetActivator(TID);
+	SetActivator(0, AAPTR_NULL);
 	ACS_NamedExecuteAlways("Sync_ID1", 0, PID, PlayerTID[PID], Team[PID]);
-	Thing_Remove(TID);
 }
 
 Script "Sync_ID1" (int arg1, int arg2, int arg3) CLIENTSIDE
 {
 	SetActivatorToPlayer(ConsolePlayerNumber());
+	if(!PlayerInGame(ConsolePlayerNumber()))
+		terminate;
 	PlayerTID[arg1] = arg2;
 	Team[arg1] = arg3;
-	while(CheckInventory("RequestDone") == 0) {
-		NamedRequestScriptPuke("Request_Sync", ConsolePlayerNumber(), PlayerTID[ConsolePlayerNumber()], Team[ConsolePlayerNumber()]);
-		Delay(10);
+	if(ConsolePlayerNumber() != arg1) {
+		while(CheckInventory("RequestDone") == 0) {
+			NamedRequestScriptPuke("Request_Sync", ConsolePlayerNumber(), PlayerTID[ConsolePlayerNumber()], Team[ConsolePlayerNumber()]);
+			Delay(10);
+		}
 	}
 }
 
 Script "Sync_ID2" (int arg1, int arg2, int arg3) CLIENTSIDE
 {
 	SetActivatorToPlayer(ConsolePlayerNumber());
+	if(!PlayerInGame(ConsolePlayerNumber()))
+		terminate;
 	PlayerTID[arg1] = arg2;
 	Team[arg1] = arg3;
 }
@@ -134,14 +131,11 @@ Script "Sync_ID2" (int arg1, int arg2, int arg3) CLIENTSIDE
 Script "Request_Sync" (int arg1, int arg2, int arg3) NET
 {
 	SetActivatorToPlayer(arg1);
+	if(!PlayerInGame(arg1))
+		terminate;
 	if(CheckInventory("RequestDone") == 1)
 		terminate;
-	int TID = UniqueTID();
-	SpawnForced("NULLACTOR", GetActorX(0), GetActorY(0), GetActorZ(0), TID, 0);
-	SetActivator(TID);
-	SetPointer(AAPTR_NULL, 0);
-	SetActivatorToPlayer(arg1);
-	SetActivator(TID);
+	SetActivator(0, AAPTR_NULL);
 	ACS_NamedExecuteAlways("Sync_ID2", 0, arg1, arg2, arg3);
 	SetActivatorToPlayer(arg1);
 	GiveInventory("RequestDone", 1);
@@ -149,18 +143,51 @@ Script "Request_Sync" (int arg1, int arg2, int arg3) NET
 	TakeInventory("RequestDone", 1);
 }
 
+Script "Disconnect_Sync" (int arg1) DISCONNECT
+{
+	ACS_NamedExecuteAlways("Sync_ID2", 0, arg1, 0, 0);
+	PlayerTID[arg1] = 0;
+	Team[arg1] = 0;
+}
+
+
+// For debug
+//------------------------------------------------------------------------------
+/*script "test_server" net
+{
+	for (int i = 0; i <= 64; i++) {
+		if(PlayerInGame(i))
+			log(d:PlayerTID[i], s:"  ", d:Team[i]);
+	
+	}
+}
+
+script "test_client" net ClientSide
+{
+	for (int i = 0; i <= 64; i++) {
+		if(PlayerInGame(i))
+			print(d:PlayerTID[i], s:"  ", d:Team[i]);
+	}
+}
+*/
+//------------------------------------------------------------------------------
+
 
 Script "Player_HUD" (void) CLIENTSIDE
 {
 	SetActivatorToPlayer(ConsolePlayerNumber());
+	if(!PlayerInGame(ConsolePlayerNumber()))
+		terminate;
+	if(PlayerIsBot(ConsolePlayerNumber()))
+		terminate;
 	int PT = PlayerTeam();
 	Delay(100);
 	while(true) {
 		if(GetUserCVar(ConsolePlayerNumber(), "uda_enable")) {
 			for (int i = 0; i <= 64; i++) {
-				if(!ConsolePlayerNumber() == i) {
+				if(ConsolePlayerNumber() != i) {
 					if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
-						if(GetUserCVar(PlayerNumber(), "uda_name") == True){
+						if(GetUserCVar(ConsolePlayerNumber(), "uda_name") == True){
 							ACS_NamedExecuteAlways("Name_HUD", 0, 0, 0, 0);
 							terminate;
 						} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
@@ -184,14 +211,18 @@ Script "Player_HUD" (void) CLIENTSIDE
 Script "Name_HUD" (void) CLIENTSIDE
 {
 	SetActivatorToPlayer(ConsolePlayerNumber());
+	if(!PlayerInGame(ConsolePlayerNumber()))
+		terminate;
+	if(PlayerIsBot(ConsolePlayerNumber()))
+		terminate;
 	int PT = PlayerTeam();
 	Delay(100);
 	while(true) {
-		if(GetUserCVar(PlayerNumber(), "uda_enable")) {
+		if(GetUserCVar(ConsolePlayerNumber(), "uda_enable")) {
 			for (int i = 0; i <= 64; i++) {
-				if(!ConsolePlayerNumber() == i) {
+				if(ConsolePlayerNumber() != i) {
 					if (PlayerInGame(i) && GetActorProperty(PlayerTID[i], APROP_Health) > 0) {
-						if(GetUserCVar(PlayerNumber(), "uda_name") == False){
+						if(GetUserCVar(ConsolePlayerNumber(), "uda_name") == False){
 							ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 							terminate;
 						} else if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE){
