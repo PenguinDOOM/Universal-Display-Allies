@@ -1,3 +1,13 @@
+v4_beta
+--------------------------------------------------------------------------------
+* MIT license.
+* Added some cvars.
+* Use BCSUtils to display allies in a smarter and more accurate way.
+* Changed tid sync method to improve reliability.
+* It now works with coop spy.
+* Many other bug fixes.
+
+
 v3_beta
 --------------------------------------------------------------------------------
 * Fixed a bug that causes incorrect behavior after the third person.
@@ -5,7 +15,7 @@ v3_beta
 
 v2_beta
 --------------------------------------------------------------------------------
-+ Added enable/disable switch. (Additional CVar "uda_enable")
+* Added enable/disable switch. (Additional CVar "uda_enable")
 * Changed the for loops in the Enter and Respawn scripts to separate methoads.
 * Changed some codes. 
 
