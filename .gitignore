@@ -6,4 +6,6 @@
 *.exe
 *.ini
 *.bat
+*.bak
+*.backup
 /acs/
