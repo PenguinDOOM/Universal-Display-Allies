@@ -207,7 +207,7 @@ Script "Sync_ID_Client_1" (int arg1, int arg2, int arg3) CLIENTSIDE
 	int PN = ConsolePlayerNumber();
 	
 	SetActivatorToPlayer(PN);
-	if(!PlayerInGame(PN) || PlayerIsBot(PN))
+	if(PN = -1 || !PlayerInGame(PN) || PlayerIsBot(PN))
 		terminate;
 	
 	PlayerTID[PN][arg1] = arg2;
@@ -218,7 +218,7 @@ Script "Sync_ID_Client_2" (int arg1, int arg2, int arg3) CLIENTSIDE
 {
 	int PN = ConsolePlayerNumber();
 	
-	if(PN != arg1 || !PlayerInGame(PN) || PlayerIsBot(PN))
+	if(PN = -1 || PN != arg1 || !PlayerInGame(PN) || PlayerIsBot(PN))
 		terminate;
 	
 	PlayerTID[PN][arg2] = arg3;
@@ -228,7 +228,7 @@ Script "Sync_Team_Client_2" (int arg1, int arg2, int arg3) CLIENTSIDE
 {
 	int PN = ConsolePlayerNumber();
 	
-	if(PN != arg1 || !PlayerInGame(PN) || PlayerIsBot(PN))
+	if(PN = -1 || PN != arg1 || !PlayerInGame(PN) || PlayerIsBot(PN))
 		terminate;
 	
 	Team[PN][arg2] = arg3;
@@ -245,6 +245,9 @@ Script "Player_HUD" ENTER CLIENTSIDE
 {
 	
 	int PN = ConsolePlayerNumber();
+	
+	if(IsServer() && IsClient())
+		PN = PlayerNumber();
 	
 	if(!PlayerInGame(PN) || PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("LastManStanding") || GetCVar("Duel"))
 		terminate;
@@ -333,7 +336,7 @@ Script "Player_HUD" ENTER CLIENTSIDE
 								if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
 									IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, "allya0", "", height, 0.0, autoscale, false);
 								else
-									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "STFDEAD0", "", height, 0.5, autoscale, true);
+									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "UDADEADM", "", height, 0.5, autoscale, true);
 								
 							}
 							else if(TeamPlay) {
@@ -342,7 +345,7 @@ Script "Player_HUD" ENTER CLIENTSIDE
 									if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
 										IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, "allya0", "", height, 0.0, autoscale, false);
 									else
-										IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "STFDEAD0", "", height, 0.5, autoscale, true);
+										IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "UDADEADM", "", height, 0.5, autoscale, true);
 								}
 								
 							}
