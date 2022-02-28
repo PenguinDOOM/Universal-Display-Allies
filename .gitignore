@@ -8,4 +8,4 @@
 *.bat
 *.bak
 *.backup
-/acs/
+acs/
