@@ -86,20 +86,25 @@ ACSUtils uses code from ACS-X:
 // 07/08/20
 
 #library "UDA"
+
 #include "zcommon.h"
 #include "bcsutils.bcs"
 
+#define MAXPLAYERS 64
+
 using BCSUtils;
 
-int ServerPlayerTID[64], ServerTeam[64], PlayerTID[64][64], Team[64][64];
-fixed PX[64][64], PY[64][64], PZ[64][64];
+int ServerPlayerTID[MAXPLAYERS], ServerTeam[MAXPLAYERS], PlayerTID[MAXPLAYERS][MAXPLAYERS], Team[MAXPLAYERS][MAXPLAYERS];
+fixed PX[MAXPLAYERS][MAXPLAYERS], PY[MAXPLAYERS][MAXPLAYERS], PZ[MAXPLAYERS][MAXPLAYERS];
 
 void GetPlayerSpy (int PN)
 {	
 	r1 = CheckPlayerCamera(PN);
 	
 	SetActivator(CheckPlayerCamera(PN));
+	
 	r2 = PlayerNumber();
+	
 	SetActivatorToPlayer(PN);
 }
 	
@@ -115,7 +120,9 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 	if(height <= 0.9)
 		height = 1.0;
 	
-	PX[PN][i] = GetActorX(tid); PY[PN][i] = GetActorY(tid); PZ[PN][i] = GetActorZ(tid);
+	PX[PN][i] = GetActorX(tid);
+	PY[PN][i] = GetActorY(tid);
+	PZ[PN][i] = GetActorZ(tid);
 	
 	HudResetState();
 		
@@ -151,29 +158,34 @@ Script "Player_ID1" ENTER
 	
 	Delay(GetCVar("UDA_SetTIDTics"));
 	
-	int TID;
-	int PN = PlayerNumber();
+	int TID, PN = PlayerNumber();
 	
 	if(!PlayerInGame(PN))
 		terminate;
 	
 	ServerTeam[PN] = PlayerTeam();
 	ServerPlayerTID[PN] = ActivatorTID();
+	
 	if(ServerPlayerTID[PN] == 0)
 		Thing_ChangeTID(0, UniqueTID());
+		
 	ServerPlayerTID[PN] = ActivatorTID();
 	
-		for(int i = 0; i < 64; i++) {
+		for(int i = 0; i < 64; i++)
+		{
 			if(!PlayerInGame(i) || i == PN)
 				continue;
-			if(!PlayerIsBot(PN)) {
-				ACS_NamedExecuteAlways("Sync_ID_Client_2", 0, PN, i, ServerPlayerTID[i]);
-				ACS_NamedExecuteAlways("Sync_Team_Client_2", 0, PN, i, ServerTeam[i]);
+				
+			if(!PlayerIsBot(PN))
+			{
+				NamedExecuteClientScript("Sync_ID_Client_2", PN, PN, i, ServerPlayerTID[i], 0);
+				NamedExecuteClientScript("Sync_Team_Client_2", PN, PN, i, ServerTeam[i], 0);
 			}
+			
 			Delay(1);
 		}
 	
-	ACS_NamedExecuteAlways("Sync_ID_Client_1", 0, PN, ServerPlayerTID[PN], ServerTeam[PN]);
+	NamedExecuteClientScript("Sync_ID_Client_1", 0, PN, ServerPlayerTID[PN], ServerTeam[PN], 0);
 }
 
 Script "Player_ID2" RESPAWN
@@ -186,19 +198,24 @@ Script "Player_ID2" RESPAWN
 	
 	Delay(GetCVar("UDA_SetTIDTics"));
 	
-	int TID;
-	int PN = PlayerNumber();
+	int TID, PN = PlayerNumber();
 	
 	if(!PlayerInGame(PN))
 		terminate;
 	
 	ServerTeam[PN] = PlayerTeam();
-	if(ServerPlayerTID[PN] != ActivatorTID()) {
+	
+	if(ServerPlayerTID[PN] != ActivatorTID())
+	{
 		ServerPlayerTID[PN] = ActivatorTID();
+		
 		if(ServerPlayerTID[PN] == 0)
 			Thing_ChangeTID(0, UniqueTID());
+			
 		ServerPlayerTID[PN] = ActivatorTID();
-		ACS_NamedExecuteAlways("Sync_ID_Client_1", 0, PN, ServerPlayerTID[PN], ServerTeam[PN]);
+		
+		
+		NamedExecuteClientScript("Sync_ID_Client_1", PN, PN, ServerPlayerTID[PN], ServerTeam[PN], 0);
 	}
 }
 
@@ -206,7 +223,6 @@ Script "Sync_ID_Client_1" (int arg1, int arg2, int arg3) CLIENTSIDE
 {
 	int PN = ConsolePlayerNumber();
 	
-	SetActivatorToPlayer(PN);
 	if(!PlayerInGame(PN) || PlayerIsBot(PN))
 		terminate;
 	
@@ -238,7 +254,14 @@ Script "Sync_Disconnect" (int arg1) DISCONNECT
 {
 	ServerPlayerTID[arg1] = 0;
 	ServerTeam[arg1] = 0;
-	ACS_NamedExecuteAlways("Sync_ID_Client_1", 0, arg1, 0, 0);
+	
+	for(int i = 0; i < 64; i++)
+	{
+		if(PlayerInGame(i) && PlayerIsBot(i))
+		{
+			NamedExecuteClientScript("Sync_ID_Client_1", i, arg1, 0, 0, 0);
+		}
+	}
 }
 
 Script "Player_HUD" ENTER CLIENTSIDE
@@ -265,10 +288,12 @@ Script "Player_HUD" ENTER CLIENTSIDE
 	if(GetCVar("TeamPlay") || GetCVar("TeamPossession") || GetCVar("TeamLMS") || GetCVar("CTF") || GetCVar("OneFlagCTF") || GetCVar("SkullTag") || GetCVar("TeamGame") || GetCVar("Domination"))
 		TeamPlay = true;
 	
-	while(true) {
+	while(true)
+	{
 		GetPlayerSpy(PN);
 		Spytid = r1;
 		Spypn = r2;
+		
 		if(Spytid != ActivatorTID())
 			Spy = true;
 		else
@@ -277,7 +302,8 @@ Script "Player_HUD" ENTER CLIENTSIDE
 		autoscale = GetCVar("uda_distance_scale");
 		height = GetCVar("uda_height");
 		
-		switch(GetCVar("uda_fonts")) {
+		switch(GetCVar("uda_fonts"))
+		{
 			case 0:
 				fonts = "CONFONT";
 				break;
@@ -295,63 +321,72 @@ Script "Player_HUD" ENTER CLIENTSIDE
 				break;
 		}
 		
-		if(GetCVar("uda_enable")) {
-			if(GetCVar("uda_name") == True){
-				
-				for (i = 0; i < 64; i++) {
-					if(Spypn != i) {
-						if(PlayerInGame(i)) {
-							if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE) {
+		if(GetCVar("uda_enable"))
+		{
+			if(GetCVar("uda_name") == True)
+			{
+				for (i = 0; i < 64; i++)
+				{
+					if(Spypn != i && PlayerInGame(i))
+					{
+						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
+						{
+						
+							if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, -1, StrParam(n:i+1), height, 0.0, autoscale, false);
+							else
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], "BIGFONT", -1, "Dead", height, 0.5, autoscale, true);
 								
+						}
+						else if(TeamPlay)
+						{
+							if(PT == Team[PN][i])
+							{
+							
 								if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
 									IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, -1, StrParam(n:i+1), height, 0.0, autoscale, false);
 								else
 									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], "BIGFONT", -1, "Dead", height, 0.5, autoscale, true);
-								
+									
 							}
-							else if(TeamPlay) {
-								
-								if(PT == Team[PN][i]) {
-									if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
-										IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, -1, StrParam(n:i+1), height, 0.0, autoscale, false);
-									else
-										IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], "BIGFONT", -1, "Dead", height, 0.5, autoscale, true);
-								}
-								
-							}
-							else { 
-								terminate;
-							}
+						}
+						else
+						{ 
+							terminate;
 						}
 					}
 				}
 			}
-			else {
-				
-				for (i = 0; i < 64; i++) {
-					if(Spypn != i) {
-						if(PlayerInGame(i)) {
-							if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE) {
+			else
+			{
+				for (i = 0; i < 64; i++)
+				{
+					if(Spypn != i && PlayerInGame(i))
+					{
+						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
+						{
+						
+							if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, "allya0", "", height, 0.0, autoscale, false);
+							else
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "UDADEADM", "", height, 0.5, autoscale, true);
 								
+						}
+						else if(TeamPlay)
+						{
+							if(PT == Team[PN][i])
+							{
+							
 								if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
 									IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, "allya0", "", height, 0.0, autoscale, false);
 								else
 									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "UDADEADM", "", height, 0.5, autoscale, true);
-								
+									
 							}
-							else if(TeamPlay) {
-								
-								if(PT == Team[PN][i]) {
-									if(GetActorProperty(PlayerTID[PN][i], APROP_Health) > 0)
-										IIIDHudMessageOnActor(PN, i, Spytid, Spy, PlayerTID[PN][i], fonts, "allya0", "", height, 0.0, autoscale, false);
-									else
-										IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, PlayerTID[PN][i], fonts, "UDADEADM", "", height, 0.5, autoscale, true);
-								}
-								
-							}
-							else {
-								terminate;
-							}
+						}
+						else
+						{
+							terminate;
 						}
 					}
 				}
