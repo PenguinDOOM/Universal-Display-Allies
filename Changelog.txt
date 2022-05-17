@@ -1,8 +1,15 @@
+v6_hotfix
+--------------------------------------------------------------------------------
+* Fixed an issue where mods wouldn't work.
+  https://github.com/PenguinDOOM/Universal-Display-Allies/commit/f2b9db4d74f730ee01c2a52e5ad652728b00823e
+
+
 v6
 --------------------------------------------------------------------------------
 * Removed the script that synchronizes variables to optimize network traffic.
 * Unroll loops to reduce loops.
 * Display the name by default.
+
 
 v5_beta
 --------------------------------------------------------------------------------
