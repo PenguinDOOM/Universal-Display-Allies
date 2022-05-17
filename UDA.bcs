@@ -142,7 +142,7 @@ Script "Player_ID2" RESPAWN
 	}
 }
 
-Script "Client_TID" OPEN CLIENTSIDE
+Script "Client_TID" ENTER CLIENTSIDE
 {
 	for(int i = 0; i < 64; i+=8)
 	{
