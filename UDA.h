@@ -103,7 +103,10 @@ void GetPlayerSpy (int PN)
 	
 	SetActivator(CheckPlayerCamera(PN));
 	
-	r2 = PlayerNumber();
+	r2 = ConsolePlayerNumber();
+	
+	if(IsServer() && IsClient())
+		r2 = PlayerNumber();
 	
 	SetActivatorToPlayer(PN);
 }
