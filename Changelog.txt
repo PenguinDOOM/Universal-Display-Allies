@@ -1,3 +1,9 @@
+v6
+--------------------------------------------------------------------------------
+* Removed the script that synchronizes variables to optimize network traffic.
+* Unroll loops to reduce loops.
+* Display the name by default.
+
 v5_beta
 --------------------------------------------------------------------------------
 * Support multiplayer emulation.
