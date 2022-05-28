@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 18/05/22
+// 29/05/22
 
 #ifndef UDA_HEADER
 #define UDA_HEADER
@@ -96,23 +96,48 @@ ACSUtils uses code from ACS-X:
 int ServerPlayerTID[MAX_PLAYERS], ClientPlayerTID[MAX_PLAYERS], ClientTeam[MAX_PLAYERS];
 fixed PX[MAX_PLAYERS][MAX_PLAYERS+65], PY[MAX_PLAYERS][MAX_PLAYERS+65], PZ[MAX_PLAYERS][MAX_PLAYERS+65];
 
-void GetPlayerSpy (int PN)
-{	
-	r1 = CheckPlayerCamera(PN);
-	
-	SetActivator(CheckPlayerCamera(PN));
-	
-	r2 = ConsolePlayerNumber();
-	
-	if(IsServer() && IsClient())
-		r2 = PlayerNumber();
-	
-	SetActivatorToPlayer(PN);
+fixed VectorLength3DReal (fixed x, fixed y, fixed z) //x, y 32 units = 1 m / z 48 units = 1m (Speed is not considered)
+{
+	x = FixedDiv(x, 32.0);
+	y = FixedDiv(y, 32.0);
+	z = FixedDiv(z, 48.0);
+	fixed len = VectorLength(x, y);
+	len = VectorLength(z, len);
+	return len;
 }
+
+fixed ActorDistanceReal (int tid1, int tid2)
+{
+	return VectorLength3DReal(GetActorX(tid2) - GetActorX(tid1),
+	                          GetActorY(tid2) - GetActorY(tid1),
+	                          GetActorZ(tid2) - GetActorZ(tid1));
+}
+
+int GetPlayerSpyTID (int PN)
+{	
+	SetActivator(CheckPlayerCamera(PN)); //TID assignment required
+	int SpyTID = ActivatorTID();
+	SetActivatorToPlayer(PN);
 	
-void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead)
+	return SpyTID;
+}
+
+int GetPlayerSpyPN (int PN)
+{
+	SetActivator(CheckPlayerCamera(PN)); //TID assignment required
+	int SpyPN = ConsolePlayerNumber();
+	SetActivatorToPlayer(PN);
+	
+	return SpyPN;
+}
+
+void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead, bool distance)
 {
 	fixed tic;
+	int AD;
+	fixed temp;
+
+	int ptid = ActivatorTID();
 	
 	if(holdtics <= 0.0)
 		tic = 0.0;
@@ -125,6 +150,16 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 	PX[PN][i] = GetActorX(tid);
 	PY[PN][i] = GetActorY(tid);
 	PZ[PN][i] = GetActorZ(tid);
+	if(GetCVar("UDA_Meter"))
+	{
+		temp = ActorDistanceReal(ptid, tid);
+		AD = itrunc(temp);
+	}
+	else
+	{
+		temp = ActorDistance(ptid, tid);
+		AD = itrunc(temp);
+	}
 	
 	HudResetState();
 		
@@ -143,9 +178,16 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 		
 		if(sprite != -1)
 			HudDrawImage(i, sprite);
+		else if(distance)
+		{
+			if(GetCVar("UDA_Meter"))
+				HudDrawText(i, StrParam(d:AD, s:"m\n", s:text));
+			else
+				HudDrawText(i, StrParam(d:AD, s:"units\n", s:text));
+		}
 		else
-			HudDrawText(i, text);
-		
+			HudDrawText(i, s:text);
+			
 		if(dead)
 			HudDrawText(i-65, "");
 }

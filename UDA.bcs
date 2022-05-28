@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 18/05/22
+// 29/05/22
 
 #library "UDA"
 
@@ -92,13 +92,29 @@ ACSUtils uses code from ACS-X:
 using BCSUtils;
 #include "UDA.h"
 
+Script "Players_Count" OPEN
+{
+	SetCVar("UDA_TID", UniqueTID());
+	SyncVariable(GetCVar("UDA_TID"), ClientCount());
+}
+
+Script "Connect_Count" (int type, int arg1, int arg2) EVENT
+{
+	if(GAMEEVENT_PLAYERCONNECT == type)
+		SyncVariable(GetCVar("UDA_TID"), ClientCount());
+}
+
+Script "Disconnect_Count" (int arg) DISCONNECT
+{
+	SyncVariable(GetCVar("UDA_TID"), ClientCount());
+}
 
 Script "Player_ID1" ENTER
 {
-	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("LastManStanding") || GetCVar("Duel"))
+	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
 		terminate;
 	
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay"))
+	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
 	
 	Delay(GetCVar("UDA_SetTIDTics"));
@@ -118,10 +134,10 @@ Script "Player_ID1" ENTER
 
 Script "Player_ID2" RESPAWN
 {
-	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("LastManStanding") || GetCVar("Duel"))
+	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
 		terminate;
 	
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay"))
+	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
 	
 	Delay(GetCVar("UDA_SetTIDTics"));
@@ -142,57 +158,80 @@ Script "Player_ID2" RESPAWN
 	}
 }
 
-Script "Client_TID" ENTER CLIENTSIDE
+Script "Client_OPEN" OPEN CLIENTSIDE
 {
-	for(int i = 0; i < 64; i+=8)
-	{
-		SetActivatorToPlayer(i);
-		ClientPlayerTID[i] = ActivatorTID();
-		ClientTeam[i] = GetPlayerInfo(i, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+1);
-		ClientPlayerTID[i+1] = ActivatorTID();
-		ClientTeam[i+1] = GetPlayerInfo(i+1, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+2);
-		ClientPlayerTID[i+2] = ActivatorTID();
-		ClientTeam[i+2] = GetPlayerInfo(i+2, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+3);
-		ClientPlayerTID[i+3] = ActivatorTID();
-		ClientTeam[i+3] = GetPlayerInfo(i+3, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+4);
-		ClientPlayerTID[i+4] = ActivatorTID();
-		ClientTeam[i+4] = GetPlayerInfo(i+4, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+5);
-		ClientPlayerTID[i+5] = ActivatorTID();
-		ClientTeam[i+5] = GetPlayerInfo(i+5, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+6);
-		ClientPlayerTID[i+6] = ActivatorTID();
-		ClientTeam[i+6] = GetPlayerInfo(i+6, PLAYERINFO_TEAM);
-		SetActivatorToPlayer(i+7);
-		ClientPlayerTID[i+7] = ActivatorTID();
-		ClientTeam[i+7] = GetPlayerInfo(i+7, PLAYERINFO_TEAM);
-	}
-	Delay(1);
-	restart;
+	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
+	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
-Script "Player_HUD" ENTER CLIENTSIDE
+Script "Client_Enter" Enter CLIENTSIDE
+{
+	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
+	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
+}
+
+Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
+{
+	int PN = ConsolePlayerNumber();
+	SetActivatorToConsolePlayer();
+	
+	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
+		terminate;
+	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
+		terminate;
+		
+	int count, temp;
+	while(true)
+	{
+		count = 0;
+		temp = GetSyncVar(GetCVar("UDA_TID"));
+		for(int i = 0; i < 64; i++)
+		{
+			if(count >= temp)
+				break;
+				
+			if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
+				count++;
+				
+			SetActivatorToPlayer(i);
+			ClientPlayerTID[i] = ActivatorTID();
+			ClientTeam[i] = GetPlayerTeam(i);
+		}
+		Delay(1);
+	}
+}
+
+Script "Spectator_HUD" (int player) DISCONNECT
+{
+	if(PlayerIsSpectator(player))
+	{
+		NamedExecuteClientScript("Client_TID", player, 0, 0, 0);
+		NamedExecuteClientScript("Player_HUD", player, 0, 0, 0);
+	}
+	else if(!PlayerIsSpectator(player))
+	{
+		SyncVariable(GetCVar("UDA_TID"), ClientCount());
+	}
+}
+
+
+Script "Player_HUD" CLIENTSIDE
 {
 	
 	int PN = ConsolePlayerNumber();
+	SetActivatorToConsolePlayer();
 	
-	if(IsServer() && IsClient())
-		PN = PlayerNumber();
-	
-	if(!PlayerInGame(PN) || PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("LastManStanding") || GetCVar("Duel"))
+	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
+		terminate;
+	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
 	
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay"))
-		terminate;
-	
-	bool autoscale, Spy, TeamPlay;
+	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
 	int i, PT, Spypn, Spytid;
 	str fonts;
+	int count = 0;
+	int temp;
 	
 	PT = PlayerTeam();
 	
@@ -201,19 +240,21 @@ Script "Player_HUD" ENTER CLIENTSIDE
 	
 	while(true)
 	{
-		GetPlayerSpy(PN);
-		Spytid = r1;
-		Spypn = r2;
+		Spytid = GetPlayerSpyTID(PN);
+		Spypn = GetPlayerSpyPN(PN);
+		count = 0;
+		temp = GetSyncVar(GetCVar("UDA_TID"));
 		
-		if(Spytid != ActivatorTID())
-			Spy = true;
-		else
+		if(Spytid == ClientPlayerTID[PN])
 			Spy = false;
+		else
+			Spy = true;
 		
-		autoscale = GetCVar("uda_distance_scale");
-		height = GetCVar("uda_height");
+		autoscale = GetCVar("UDA_Distance_Scale");
+		height = GetCVar("UDA_Height");
+		distance = GetCVar("UDA_Distance");
 		
-		switch(GetCVar("uda_fonts"))
+		switch(GetCVar("UDA_Fonts"))
 		{
 			case 0:
 				fonts = "CONFONT";
@@ -232,230 +273,33 @@ Script "Player_HUD" ENTER CLIENTSIDE
 				break;
 		}
 		
-		if(GetCVar("uda_enable"))
+		if(GetCVar("UDA_Enable"))
 		{
-			if(GetCVar("uda_name") == True)
+			if(GetCVar("UDA_Name") == True)
 			{
-				for (i = 0; i < 64; i+=8)
+				for (i = 0; i < 64; i++)
 				{
+					if(count >= temp)
+						break;
+				
+					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
+						count++;
+					
 					if(Spypn != i && PlayerInGame(i))
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-						
 							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, StrParam(n:i+1), height, 0.0, autoscale, false);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
-						else if(TeamPlay)
+						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(PT == ClientTeam[i])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, StrParam(n:i+1), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+1 && PlayerInGame(i+1))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+1], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+1, Spytid, Spy, ClientPlayerTID[i+1], fonts, -1, StrParam(n:i+2), height, 0.0, autoscale, false);
+							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+66, Spytid, Spy, ClientPlayerTID[i+1], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+1])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+1], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+1, Spytid, Spy, ClientPlayerTID[i+1], fonts, -1, StrParam(n:i+2), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+66, Spytid, Spy, ClientPlayerTID[i+1], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+2 && PlayerInGame(i+2))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+2], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+2, Spytid, Spy, ClientPlayerTID[i+2], fonts, -1, StrParam(n:i+3), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+67, Spytid, Spy, ClientPlayerTID[i+2], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+2])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+2], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+2, Spytid, Spy, ClientPlayerTID[i+2], fonts, -1, StrParam(n:i+3), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+67, Spytid, Spy, ClientPlayerTID[i+2], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+3 && PlayerInGame(i+3))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+3], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+3, Spytid, Spy, ClientPlayerTID[i+3], fonts, -1, StrParam(n:i+4), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+68, Spytid, Spy, ClientPlayerTID[i+3], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+3])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+3], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+3, Spytid, Spy, ClientPlayerTID[i+3], fonts, -1, StrParam(n:i+4), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+68, Spytid, Spy, ClientPlayerTID[i+3], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+4 && PlayerInGame(i+4))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+4], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+4, Spytid, Spy, ClientPlayerTID[i+4], fonts, -1, StrParam(n:i+5), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+69, Spytid, Spy, ClientPlayerTID[i+4], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+4])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+4], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+4, Spytid, Spy, ClientPlayerTID[i+4], fonts, -1, StrParam(n:i+5), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+69, Spytid, Spy, ClientPlayerTID[i+4], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+5 && PlayerInGame(i+5))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+5], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+5, Spytid, Spy, ClientPlayerTID[i+5], fonts, -1, StrParam(n:i+6), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+70, Spytid, Spy, ClientPlayerTID[i+5], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+5])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+5], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+5, Spytid, Spy, ClientPlayerTID[i+5], fonts, -1, StrParam(n:i+6), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+70, Spytid, Spy, ClientPlayerTID[i+5], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+6 && PlayerInGame(i+6))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+6], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+6, Spytid, Spy, ClientPlayerTID[i+6], fonts, -1, StrParam(n:i+7), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+71, Spytid, Spy, ClientPlayerTID[i+6], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+6])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+6], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+6, Spytid, Spy, ClientPlayerTID[i+6], fonts, -1, StrParam(n:i+7), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+71, Spytid, Spy, ClientPlayerTID[i+6], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+7 && PlayerInGame(i+7))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+7], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+7, Spytid, Spy, ClientPlayerTID[i+7], fonts, -1, StrParam(n:i+8), height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+72, Spytid, Spy, ClientPlayerTID[i+7], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+7])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+7], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+7, Spytid, Spy, ClientPlayerTID[i+7], fonts, -1, StrParam(n:i+8), height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+72, Spytid, Spy, ClientPlayerTID[i+7], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true);
-									
-							}
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
 						else
 						{ 
@@ -466,229 +310,32 @@ Script "Player_HUD" ENTER CLIENTSIDE
 			}
 			else
 			{
-				for (i = 0; i < 64; i+=8)
+				for (i = 0; i < 64; i++)
 				{
+					if(count >= temp)
+						break;
+				
+					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
+						count++;
+						
 					if(Spypn != i && PlayerInGame(i))
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-						
 							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
-						else if(TeamPlay)
+						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(PT == ClientTeam[i])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
+							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							else
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
 						else
 						{
-							terminate;
-						}
-					}
-					if(Spypn != i+1 && PlayerInGame(i+1))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+1], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+1, Spytid, Spy, ClientPlayerTID[i+1], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+66, Spytid, Spy, ClientPlayerTID[i+1], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+1])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+1], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+1, Spytid, Spy, ClientPlayerTID[i+1], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+66, Spytid, Spy, ClientPlayerTID[i+1], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+2 && PlayerInGame(i+2))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+2], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+2, Spytid, Spy, ClientPlayerTID[i+2], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+67, Spytid, Spy, ClientPlayerTID[i+2], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+2])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+2], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+2, Spytid, Spy, ClientPlayerTID[i+2], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+67, Spytid, Spy, ClientPlayerTID[i+2], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+3 && PlayerInGame(i+3))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+3], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+3, Spytid, Spy, ClientPlayerTID[i+3], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+68, Spytid, Spy, ClientPlayerTID[i+3], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+3])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+3], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+3, Spytid, Spy, ClientPlayerTID[i+3], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+68, Spytid, Spy, ClientPlayerTID[i+3], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+4 && PlayerInGame(i+4))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+4], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+4, Spytid, Spy, ClientPlayerTID[i+4], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+69, Spytid, Spy, ClientPlayerTID[i+4], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+4])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+4], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+4, Spytid, Spy, ClientPlayerTID[i+4], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+69, Spytid, Spy, ClientPlayerTID[i+4], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+5 && PlayerInGame(i+5))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+5], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+5, Spytid, Spy, ClientPlayerTID[i+5], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+70, Spytid, Spy, ClientPlayerTID[i+5], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+5])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+5], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+5, Spytid, Spy, ClientPlayerTID[i+5], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+70, Spytid, Spy, ClientPlayerTID[i+5], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+6 && PlayerInGame(i+6))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+6], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+6, Spytid, Spy, ClientPlayerTID[i+6], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+71, Spytid, Spy, ClientPlayerTID[i+6], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+6])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+6], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+6, Spytid, Spy, ClientPlayerTID[i+6], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+71, Spytid, Spy, ClientPlayerTID[i+6], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
-							terminate;
-						}
-					}
-					if(Spypn != i+7 && PlayerInGame(i+7))
-					{
-						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
-						{
-						
-							if(GetActorProperty(ClientPlayerTID[i+7], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i+7, Spytid, Spy, ClientPlayerTID[i+7], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-							else
-								IIIDHudMessageOnActor(PN, i+72, Spytid, Spy, ClientPlayerTID[i+7], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-								
-						}
-						else if(TeamPlay)
-						{
-							if(PT == ClientTeam[i+7])
-							{
-							
-								if(GetActorProperty(ClientPlayerTID[i+7], APROP_Health) > 0)
-									IIIDHudMessageOnActor(PN, i+7, Spytid, Spy, ClientPlayerTID[i+7], fonts, ALLYMARK, "", height, 0.0, autoscale, false);
-								else
-									IIIDHudMessageOnActor(PN, i+72, Spytid, Spy, ClientPlayerTID[i+7], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true);
-									
-							}
-						}
-						else
-						{ 
 							terminate;
 						}
 					}
