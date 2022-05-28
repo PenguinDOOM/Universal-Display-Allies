@@ -185,7 +185,7 @@ Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
 	{
 		count = 0;
 		temp = GetSyncVar(GetCVar("UDA_TID"));
-		for(int i = 0; i < 64; i++)
+		for(int i = 0; i < MAX_PLAYERS; i++)
 		{
 			if(count >= temp)
 				break;
@@ -277,7 +277,7 @@ Script "Player_HUD" CLIENTSIDE
 		{
 			if(GetCVar("UDA_Name") == True)
 			{
-				for (i = 0; i < 64; i++)
+				for (i = 0; i < MAX_PLAYERS; i++)
 				{
 					if(count >= temp)
 						break;
@@ -310,7 +310,7 @@ Script "Player_HUD" CLIENTSIDE
 			}
 			else
 			{
-				for (i = 0; i < 64; i++)
+				for (i = 0; i < MAX_PLAYERS; i++)
 				{
 					if(count >= temp)
 						break;
