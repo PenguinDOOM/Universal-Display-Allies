@@ -186,7 +186,7 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 				HudDrawText(i, StrParam(d:AD, s:"units\n", s:text));
 		}
 		else
-			HudDrawText(i, s:text);
+			HudDrawText(i, text);
 			
 		if(dead)
 			HudDrawText(i-65, "");
