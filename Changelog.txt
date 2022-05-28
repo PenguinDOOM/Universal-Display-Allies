@@ -1,3 +1,9 @@
+v7
+--------------------------------------------------------------------------------
+* Used another algorithm instead of loop unrolling to improve performance and readability.
+* Supported use during spectator mode.
+* The distance to allies can now be displayed.
+
 v6_hotfix
 --------------------------------------------------------------------------------
 * Fixed an issue where mods wouldn't work.
