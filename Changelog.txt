@@ -2,7 +2,8 @@ v7
 --------------------------------------------------------------------------------
 * Used another algorithm instead of loop unrolling to improve performance and readability.
 * Supported use during spectator mode.
-* The distance to allies can now be displayed.
+* The distance to allies can now be displayed. (Thanks Vampy)
+* The color of the numerical value changes depending on the distance. (Thanks Arkore)
 
 v6_hotfix
 --------------------------------------------------------------------------------
