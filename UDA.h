@@ -136,6 +136,7 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 	fixed tic;
 	int AD;
 	fixed temp;
+	str color ;
 
 	int ptid = ActivatorTID();
 	
@@ -161,6 +162,29 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 		AD = itrunc(temp);
 	}
 	
+	if(GetCVar("UDA_Meter"))
+	{
+		if(50 >= AD)
+			color = "\cd";
+		else if(100 >= AD && AD > 50)
+			color = "\ck";
+		else if(150 >= AD && AD > 100)
+			color = "\ci";
+		else if(AD > 150)
+			color = "\cg";
+	}
+	else
+	{
+		if(1600 >= AD)
+			color = "\cd";
+		else if(3200 >= AD && AD > 1600)
+			color = "\ck";
+		else if(4800 >= AD && AD > 3200)
+			color = "\ci";
+		else if(AD > 4800)
+			color = "\cg";
+	}
+	
 	HudResetState();
 		
 		if(Spy)
@@ -181,9 +205,9 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 		else if(distance)
 		{
 			if(GetCVar("UDA_Meter"))
-				HudDrawText(i, StrParam(d:AD, s:"m\n", s:text));
+				HudDrawText(i, StrParam(s:color, d:AD, s:"m\n\c-", s:text));
 			else
-				HudDrawText(i, StrParam(d:AD, s:"units\n", s:text));
+				HudDrawText(i, StrParam(s:color, d:AD, s:"units\n\c-", s:text));
 		}
 		else
 			HudDrawText(i, text);
