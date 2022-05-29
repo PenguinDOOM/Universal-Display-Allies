@@ -90,7 +90,7 @@ ACSUtils uses code from ACS-X:
 #include "zcommon.h"
 #include "bcsutils.bcs"
 using BCSUtils;
-#include "UDA.h"
+#include "NONTID_UDA.h"
 
 Script "Players_Count" OPEN
 {
@@ -109,55 +109,6 @@ Script "Disconnect_Count" (int arg) DISCONNECT
 	SyncVariable(GetCVar("UDA_TID"), ClientCount());
 }
 
-Script "Player_ID1" ENTER
-{
-	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
-		terminate;
-	
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
-		terminate;
-	
-	Delay(GetCVar("UDA_SetTIDTics"));
-	
-	int PN = PlayerNumber();
-	
-	if(!PlayerInGame(PN))
-		terminate;
-	
-	ServerPlayerTID[PN] = ActivatorTID();
-	
-	if(ServerPlayerTID[PN] == 0)
-		Thing_ChangeTID(0, UniqueTID());
-	
-	ServerPlayerTID[PN] = ActivatorTID();
-}
-
-Script "Player_ID2" RESPAWN
-{
-	if(GameType() == GAME_TITLE_MAP || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
-		terminate;
-	
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
-		terminate;
-	
-	Delay(GetCVar("UDA_SetTIDTics"));
-	
-	int PN = PlayerNumber();
-	
-	if(!PlayerInGame(PN))
-		terminate;
-	
-	if(ServerPlayerTID[PN] != ActivatorTID())
-	{
-		ServerPlayerTID[PN] = ActivatorTID();
-		
-		if(ServerPlayerTID[PN] == 0)
-			Thing_ChangeTID(0, UniqueTID());
-			
-		ServerPlayerTID[PN] = ActivatorTID();
-	}
-}
-
 Script "Client_OPEN" OPEN CLIENTSIDE
 {
 	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
@@ -170,7 +121,7 @@ Script "Client_Enter" Enter CLIENTSIDE
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
-Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
+Script "Client_TID" CLIENTSIDE
 {
 	int PN = ConsolePlayerNumber();
 	SetActivatorToConsolePlayer();
@@ -194,7 +145,6 @@ Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
 				count++;
 				
 			SetActivatorToPlayer(i);
-			ClientPlayerTID[i] = ActivatorTID();
 			ClientTeam[i] = GetPlayerTeam(i);
 		}
 		Delay(1);
@@ -214,7 +164,6 @@ Script "Spectator_HUD" (int player) DISCONNECT
 	}
 }
 
-
 Script "Player_HUD" CLIENTSIDE
 {
 	
@@ -228,10 +177,11 @@ Script "Player_HUD" CLIENTSIDE
 	
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
-	int i, PT, Spypn, Spytid;
+	int i, PT;
 	str fonts;
 	int count = 0;
 	int temp;
+	int health;
 	
 	PT = PlayerTeam();
 	
@@ -240,15 +190,8 @@ Script "Player_HUD" CLIENTSIDE
 	
 	while(true)
 	{
-		Spytid = GetPlayerSpyTID(PN);
-		Spypn = GetPlayerSpyPN(PN);
 		count = 0;
 		temp = GetSyncVar(GetCVar("UDA_TID"));
-		
-		if(Spytid == ClientPlayerTID[PN])
-			Spy = false;
-		else
-			Spy = true;
 		
 		autoscale = GetCVar("UDA_Distance_Scale");
 		height = GetCVar("UDA_Height");
@@ -285,21 +228,24 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 					
-					if(Spypn != i && PlayerInGame(i))
+					if(PN != i && PlayerInGame(i))
 					{
+						SetActivatorToPlayer(i);
+						health = GetActorProperty(0, APROP_Health);
+						SetActivatorToPlayer(PN);
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							if(health > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
 						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							if(health > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
 						else
 						{ 
@@ -318,21 +264,25 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 						
-					if(Spypn != i && PlayerInGame(i))
+					if(PN != i && PlayerInGame(i))
 					{
+						SetActivatorToPlayer(i);
+						health = GetActorProperty(0, APROP_Health);
+						SetActivatorToPlayer(PN);
+						
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							if(health > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
 						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							if(health > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
 						else
 						{
