@@ -201,19 +201,19 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 		HudSetLayer(HUDMSG_LAYER_UNDERHUD);
 		
 		if(sprite != -1)
-			HudDrawImage(i, sprite);
+			HudDrawImage(i+1000, sprite);
 		else if(distance)
 		{
 			if(GetCVar("UDA_Meter"))
-				HudDrawText(i, StrParam(s:color, d:AD, s:"m\n\c-", s:text));
+				HudDrawText(i+1000, StrParam(s:color, d:AD, s:"m\n\c-", s:text));
 			else
-				HudDrawText(i, StrParam(s:color, d:AD, s:"units\n\c-", s:text));
+				HudDrawText(i+1000, StrParam(s:color, d:AD, s:"units\n\c-", s:text));
 		}
 		else
-			HudDrawText(i, text);
+			HudDrawText(i+1000, text);
 			
 		if(dead)
-			HudDrawText(i-65, "");
+			HudDrawText(i+1000-65, "");
 }
 
 #endif
