@@ -106,11 +106,38 @@ fixed VectorLength3DReal (fixed x, fixed y, fixed z) //x, y 32 units = 1 m / z 4
 	return len;
 }
 
-fixed ActorDistanceReal (int tid1, int tid2)
+fixed ActorDistanceReal (int pn1, int pn2)
 {
-	return VectorLength3DReal(GetActorX(tid2) - GetActorX(tid1),
-	                          GetActorY(tid2) - GetActorY(tid1),
-	                          GetActorZ(tid2) - GetActorZ(tid1));
+	fixed p1x, p1y, p1z, p2x, p2y, p2z;
+	p1x = GetActorX(0);
+	p1y = GetActorY(0);
+	p1z = GetActorZ(0);
+	SetActivatorToPlayer(pn2);
+	p2x = GetActorX(0);
+	p2y = GetActorY(0);
+	p2z = GetActorZ(0);
+	SetActivatorToPlayer(pn1);
+	
+	return VectorLength3DReal(p2x - p1x,
+	                          p2y - p1y,
+	                          p2z - p1z);
+}
+
+fixed NonTIDActorDistance (int pn1, int pn2)
+{
+	fixed p1x, p1y, p1z, p2x, p2y, p2z;
+	p1x = GetActorX(0);
+	p1y = GetActorY(0);
+	p1z = GetActorZ(0);
+	SetActivatorToPlayer(pn2);
+	p2x = GetActorX(0);
+	p2y = GetActorY(0);
+	p2z = GetActorZ(0);
+	SetActivatorToPlayer(pn1);
+	
+	return VectorLength3D(p2x - p1x,
+	                      p2y - p1y,
+	                      p2z - p1z);
 }
 
 int GetPlayerSpyTID (int PN)
@@ -131,14 +158,12 @@ int GetPlayerSpyPN (int PN)
 	return SpyPN;
 }
 
-void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead, bool distance)
+void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead, bool distance)
 {
 	fixed tic;
 	int AD;
 	fixed temp;
 	str color ;
-
-	int ptid = ActivatorTID();
 	
 	if(holdtics <= 0.0)
 		tic = 0.0;
@@ -148,17 +173,19 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, int tid, str fon
 	if(height <= 0.9)
 		height = 1.0;
 	
-	PX[PN][i] = GetActorX(tid);
-	PY[PN][i] = GetActorY(tid);
-	PZ[PN][i] = GetActorZ(tid);
+	PX[PN][i] = GetActorX(0);
+	PY[PN][i] = GetActorY(0);
+	PZ[PN][i] = GetActorZ(0);
+	SetActivatorToPlayer(PN);
+	
 	if(GetCVar("UDA_Meter"))
 	{
-		temp = ActorDistanceReal(ptid, tid);
+		temp = ActorDistanceReal(pn, i);
 		AD = itrunc(temp);
 	}
 	else
 	{
-		temp = ActorDistance(ptid, tid);
+		temp = NonTIDActorDistance(pn, i);
 		AD = itrunc(temp);
 	}
 	

@@ -160,7 +160,7 @@ Script "Client_Enter" Enter CLIENTSIDE
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
-Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
+Script "Client_TID" CLIENTSIDE
 {
 	int PN = ConsolePlayerNumber();
 	SetActivatorToConsolePlayer();
@@ -174,7 +174,7 @@ Script "Client_TID" CLIENTSIDE//OPEN CLIENTSIDE
 	while(true)
 	{
 		count = 0;
-		temp = GetSyncVar(GetCVar("UDA_TID"));
+		temp = GetSyncVar(GetCVar("UDA_TID")); //ClientCount() loops 64 times and is costly, so the server counts instead.
 		for(int i = 0; i < MAX_PLAYERS; i++)
 		{
 			if(count >= temp)
@@ -218,10 +218,9 @@ Script "Player_HUD" CLIENTSIDE
 	
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
-	int i, PT, Spypn, Spytid;
+	int i, PT, Spypn, Spytid, temp, phealth;
 	str fonts;
 	int count = 0;
-	int temp;
 	
 	PT = PlayerTeam();
 	
@@ -235,7 +234,7 @@ Script "Player_HUD" CLIENTSIDE
 		count = 0;
 		temp = GetSyncVar(GetCVar("UDA_TID"));
 		
-		if(Spytid == ClientPlayerTID[PN])
+		if(Spypn == PN)
 			Spy = false;
 		else
 			Spy = true;
@@ -279,17 +278,21 @@ Script "Player_HUD" CLIENTSIDE
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
 						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
 						else
 						{ 
@@ -312,17 +315,21 @@ Script "Player_HUD" CLIENTSIDE
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
 						else if(TeamPlay && PT == ClientTeam[i])
 						{
-							if(GetActorProperty(ClientPlayerTID[i], APROP_Health) > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, ClientPlayerTID[i], fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, ClientPlayerTID[i], fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
 						else
 						{
