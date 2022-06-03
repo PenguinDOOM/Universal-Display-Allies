@@ -124,12 +124,8 @@ Script "Player_ID1" ENTER
 	if(!PlayerInGame(PN))
 		terminate;
 	
-	ServerPlayerTID[PN] = ActivatorTID();
-	
-	if(ServerPlayerTID[PN] == 0)
+	if(ActivatorTID() == 0)
 		Thing_ChangeTID(0, UniqueTID());
-	
-	ServerPlayerTID[PN] = ActivatorTID();
 }
 
 Script "Player_ID2" RESPAWN
@@ -146,15 +142,9 @@ Script "Player_ID2" RESPAWN
 	
 	if(!PlayerInGame(PN))
 		terminate;
-	
-	if(ServerPlayerTID[PN] != ActivatorTID())
-	{
-		ServerPlayerTID[PN] = ActivatorTID();
 		
-		if(ServerPlayerTID[PN] == 0)
-			Thing_ChangeTID(0, UniqueTID());
-			
-		ServerPlayerTID[PN] = ActivatorTID();
+	if(ActivatorTID == 0)
+		Thing_ChangeTID(0, UniqueTID());
 	}
 }
 

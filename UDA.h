@@ -93,7 +93,7 @@ ACSUtils uses code from ACS-X:
 #define ALLYMARK "allya0"
 #define DEADALLYMARK "UDADEADM"
 
-int ServerPlayerTID[MAX_PLAYERS], ClientPlayerTID[MAX_PLAYERS], ClientTeam[MAX_PLAYERS];
+int ClientPlayerTID[MAX_PLAYERS], ClientTeam[MAX_PLAYERS];
 fixed PX[MAX_PLAYERS][MAX_PLAYERS+65], PY[MAX_PLAYERS][MAX_PLAYERS+65], PZ[MAX_PLAYERS][MAX_PLAYERS+65];
 
 fixed VectorLength3DReal (fixed x, fixed y, fixed z) //x, y 32 units = 1 m / z 48 units = 1m (Speed is not considered)
