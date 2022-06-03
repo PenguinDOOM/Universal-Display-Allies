@@ -245,18 +245,18 @@ Script "Player_HUD" CLIENTSIDE
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
 							if(phealth > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
 						}
 						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
 							if(phealth > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
 						}
 						else
 						{ 
@@ -282,18 +282,18 @@ Script "Player_HUD" CLIENTSIDE
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
 							if(phealth > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
 						}
 						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
 							if(phealth > 0)
-								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
 						}
 						else
 						{

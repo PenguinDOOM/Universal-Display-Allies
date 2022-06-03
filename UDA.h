@@ -157,7 +157,7 @@ int GetPlayerSpyPN (int PN)
 	return SpyPN;
 }
 
-void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead, bool distance)
+void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool distance)
 {
 	fixed tic;
 	int AD;
@@ -237,9 +237,6 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sp
 		}
 		else
 			HudDrawText(i+1000, text);
-			
-		if(dead)
-			HudDrawText(i+1000-65, "");
 }
 
 #endif
