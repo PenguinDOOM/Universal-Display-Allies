@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 29/05/22
+// 03/06/22
 
 #library "UDA"
 
@@ -150,52 +150,18 @@ Script "Player_ID2" RESPAWN
 
 Script "Client_OPEN" OPEN CLIENTSIDE
 {
-	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
 Script "Client_Enter" Enter CLIENTSIDE
 {
-	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
-}
-
-Script "Client_TID" CLIENTSIDE
-{
-	int PN = ConsolePlayerNumber();
-	SetActivatorToConsolePlayer();
-	
-	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
-		terminate;
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
-		terminate;
-		
-	int count, temp;
-	while(true)
-	{
-		count = 0;
-		temp = GetSyncVar(GetCVar("UDA_TID")); //ClientCount() loops 64 times and is costly, so the server counts instead.
-		for(int i = 0; i < MAX_PLAYERS; i++)
-		{
-			if(count >= temp)
-				break;
-				
-			if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
-				count++;
-				
-			SetActivatorToPlayer(i);
-			ClientPlayerTID[i] = ActivatorTID();
-			ClientTeam[i] = GetPlayerTeam(i);
-		}
-		Delay(1);
-	}
 }
 
 Script "Spectator_HUD" (int player) DISCONNECT
 {
 	if(PlayerIsSpectator(player))
 	{
-		NamedExecuteClientScript("Client_TID", player, 0, 0, 0);
 		NamedExecuteClientScript("Player_HUD", player, 0, 0, 0);
 	}
 	else if(!PlayerIsSpectator(player))
@@ -218,11 +184,9 @@ Script "Player_HUD" CLIENTSIDE
 	
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
-	int i, PT, Spypn, Spytid, temp, phealth;
+	int i, Spypn, Spytid, temp, phealth;
 	str fonts;
 	int count = 0;
-	
-	PT = PlayerTeam();
 	
 	if(GetCVar("TeamPlay") || GetCVar("TeamPossession") || GetCVar("TeamLMS") || GetCVar("CTF") || GetCVar("OneFlagCTF") || GetCVar("SkullTag") || GetCVar("TeamGame") || GetCVar("Domination"))
 		TeamPlay = true;
@@ -285,7 +249,7 @@ Script "Player_HUD" CLIENTSIDE
 							else
 								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
 						}
-						else if(TeamPlay && PT == ClientTeam[i])
+						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
@@ -322,7 +286,7 @@ Script "Player_HUD" CLIENTSIDE
 							else
 								IIIDHudMessageOnActor(PN, i+65, Spytid, Spy, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
 						}
-						else if(TeamPlay && PT == ClientTeam[i])
+						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
