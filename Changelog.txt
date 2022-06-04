@@ -1,3 +1,9 @@
+v8
+--------------------------------------------------------------------------------
+* Removed dependence on TID for non spy camera processing.
+* Removed unnecessary variables.
+* Fixed multiplayer emulation and bots.
+
 v7.1
 --------------------------------------------------------------------------------
 * Added 1000 to id to prevent conflict.
@@ -47,7 +53,7 @@ v3_beta
 v2_beta
 --------------------------------------------------------------------------------
 * Added enable/disable switch. (Additional CVar "uda_enable")
-* Changed the for loops in the Enter and Respawn scripts to separate methoads.
+* Changed the for loops in the Enter and Respawn scripts to separate methods.
 * Changed some codes. 
 
 
