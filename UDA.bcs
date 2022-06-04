@@ -143,18 +143,24 @@ Script "Player_ID2" RESPAWN
 	if(!PlayerInGame(PN))
 		terminate;
 		
-	if(ActivatorTID == 0)
+	if(ActivatorTID() == 0)
 		Thing_ChangeTID(0, UniqueTID());
-	}
 }
 
-Script "Client_OPEN" OPEN CLIENTSIDE
+Script "Client_OPEN" OPEN CLIENTSIDE //The bot shouldn't be able to do this.
 {
+	if(!IsNetworkGame() && GameType() == GAME_SINGLE_PLAYER || !IsNetworkGame() && GameType() == GAME_NET_COOPERATIVE) //Detect multiplayer emulation
+		terminate;
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
-Script "Client_Enter" Enter CLIENTSIDE
+Script "Client_Enter" ENTER CLIENTSIDE
 {
+	Delay(GetCVar("UDA_SetTIDTics") + 5);
+	
+	if(PlayerIsBot(PlayerNumber()))
+		terminate;
+	
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
@@ -170,18 +176,20 @@ Script "Spectator_HUD" (int player) DISCONNECT
 	}
 }
 
-
 Script "Player_HUD" CLIENTSIDE
 {
+	int PN;
+	PN = ConsolePlayerNumber();
 	
-	int PN = ConsolePlayerNumber();
-	SetActivatorToConsolePlayer();
-	
-	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
+	if(!IsNetworkGame()) //Detect multiplayer emulation
+		PN = PlayerNumber();
+	if(PN == -1)
+		PN = ConsolePlayerNumber();
+		
+	if(IsServerOnly() || PlayerIsBot(PlayerNumber()) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
 		terminate;
 	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
-	
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
 	int i, Spypn, Spytid, temp, phealth;
@@ -198,6 +206,9 @@ Script "Player_HUD" CLIENTSIDE
 		count = 0;
 		temp = GetSyncVar(GetCVar("UDA_TID"));
 		
+		if(SpyPN == -1)
+			terminate;
+			
 		if(Spypn == PN)
 			Spy = false;
 		else

@@ -150,8 +150,9 @@ int GetPlayerSpyTID (int PN)
 
 int GetPlayerSpyPN (int PN)
 {
+	int SpyPN;
 	SetActivator(CheckPlayerCamera(PN)); //TID assignment required
-	int SpyPN = ConsolePlayerNumber();
+	SpyPN = PlayerNumber(); //TID assignment required
 	SetActivatorToPlayer(PN);
 	
 	return SpyPN;
