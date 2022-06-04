@@ -150,7 +150,7 @@ Script "Player_HUD" CLIENTSIDE
 		terminate;
 	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
-	bool autoscale, Spy, TeamPlay, distance, zdistance;
+	bool autoscale, TeamPlay, distance, zdistance;
 	fixed height;
 	int i, temp, phealth;
 	str fonts;
@@ -199,7 +199,7 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 					
-					if(Spypn != i && PlayerInGame(i))
+					if(PN != i && PlayerInGame(i))
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
@@ -240,14 +240,14 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 						
-					if(Spypn != i && PlayerInGame(i))
+					if(PN != i && PlayerInGame(i))
 					{
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
 							SetActivatorToPlayer(i);
 							phealth = GetActorProperty(0, APROP_Health);
 							if(phealth > 0)
-								IIIDHudMessageOnActor(PN, i, ALLYMARK, "", height, 1.0, autoscale, distance);
+								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
 								IIIDHudMessageOnActor(PN, i, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
 						}
