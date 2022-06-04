@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 29/05/22
+// 05/06/22
 
 #ifndef UDA_HEADER
 #define UDA_HEADER
@@ -93,7 +93,6 @@ ACSUtils uses code from ACS-X:
 #define ALLYMARK "allya0"
 #define DEADALLYMARK "UDADEADM"
 
-int ServerPlayerTID[MAX_PLAYERS], ClientPlayerTID[MAX_PLAYERS], ClientTeam[MAX_PLAYERS];
 fixed PX[MAX_PLAYERS][MAX_PLAYERS+65], PY[MAX_PLAYERS][MAX_PLAYERS+65], PZ[MAX_PLAYERS][MAX_PLAYERS+65];
 
 fixed VectorLength3DReal (fixed x, fixed y, fixed z) //x, y 32 units = 1 m / z 48 units = 1m (Speed is not considered)
@@ -140,7 +139,7 @@ fixed NonTIDActorDistance (int pn1, int pn2)
 	                      p2z - p1z);
 }
 
-void IIIDHudMessageOnActor(int PN, int i, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool dead, bool distance)
+void IIIDHudMessageOnActor(int PN, int i, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool distance)
 {
 	fixed tic;
 	int AD;
@@ -154,8 +153,7 @@ void IIIDHudMessageOnActor(int PN, int i, str font, str sprite, str text, fixed 
 	
 	if(height <= 0.9)
 		height = 1.0;
-		
-	SetActivatorToPlayer(i);
+	
 	PX[PN][i] = GetActorX(0);
 	PY[PN][i] = GetActorY(0);
 	PZ[PN][i] = GetActorZ(0);
@@ -216,9 +214,6 @@ void IIIDHudMessageOnActor(int PN, int i, str font, str sprite, str text, fixed 
 		}
 		else
 			HudDrawText(i+1000, text);
-			
-		if(dead)
-			HudDrawText(i+1000-65, "");
 }
 
 #endif

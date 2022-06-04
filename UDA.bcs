@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 29/05/22
+// 05/06/22
 
 #library "UDA"
 
@@ -109,53 +109,27 @@ Script "Disconnect_Count" (int arg) DISCONNECT
 	SyncVariable(GetCVar("UDA_TID"), ClientCount());
 }
 
-Script "Client_OPEN" OPEN CLIENTSIDE
+Script "Client_OPEN" OPEN CLIENTSIDE //The bot shouldn't be able to do this.
 {
-	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
+	if(!IsNetworkGame() && GameType() == GAME_SINGLE_PLAYER || !IsNetworkGame() && GameType() == GAME_NET_COOPERATIVE) //Detect multiplayer emulation
+		terminate;
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
-Script "Client_Enter" Enter CLIENTSIDE
+Script "Client_Enter" ENTER CLIENTSIDE
 {
-	ACS_NamedExecuteAlways("Client_TID", 0, 0, 0, 0);
-	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
-}
-
-Script "Client_TID" CLIENTSIDE
-{
-	int PN = ConsolePlayerNumber();
-	SetActivatorToConsolePlayer();
+	Delay(GetCVar("UDA_SetTIDTics") + 5);
 	
-	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
+	if(PlayerIsBot(PlayerNumber()))
 		terminate;
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
-		terminate;
-		
-	int count, temp;
-	while(true)
-	{
-		count = 0;
-		temp = GetSyncVar(GetCVar("UDA_TID"));
-		for(int i = 0; i < MAX_PLAYERS; i++)
-		{
-			if(count >= temp)
-				break;
-				
-			if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
-				count++;
-				
-			SetActivatorToPlayer(i);
-			ClientTeam[i] = GetPlayerTeam(i);
-		}
-		Delay(1);
-	}
+	
+	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
 
 Script "Spectator_HUD" (int player) DISCONNECT
 {
 	if(PlayerIsSpectator(player))
 	{
-		NamedExecuteClientScript("Client_TID", player, 0, 0, 0);
 		NamedExecuteClientScript("Player_HUD", player, 0, 0, 0);
 	}
 	else if(!PlayerIsSpectator(player))
@@ -166,24 +140,21 @@ Script "Spectator_HUD" (int player) DISCONNECT
 
 Script "Player_HUD" CLIENTSIDE
 {
+	int PN;
+	PN = ConsolePlayerNumber();
 	
-	int PN = ConsolePlayerNumber();
-	SetActivatorToConsolePlayer();
-	
-	if(PlayerIsBot(PN) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
+	if(!IsNetworkGame()) //Detect multiplayer emulation
+		PN = PlayerNumber();
+		
+	if(IsServerOnly() || PlayerIsBot(PlayerNumber()) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
 		terminate;
 	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
 		terminate;
-	
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
 	fixed height;
-	int i, PT;
+	int i, temp, phealth;
 	str fonts;
 	int count = 0;
-	int temp;
-	int health;
-	
-	PT = PlayerTeam();
 	
 	if(GetCVar("TeamPlay") || GetCVar("TeamPossession") || GetCVar("TeamLMS") || GetCVar("CTF") || GetCVar("OneFlagCTF") || GetCVar("SkullTag") || GetCVar("TeamGame") || GetCVar("Domination"))
 		TeamPlay = true;
@@ -228,24 +199,29 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 					
-					if(PN != i && PlayerInGame(i))
+					if(Spypn != i && PlayerInGame(i))
 					{
-						SetActivatorToPlayer(i);
-						health = GetActorProperty(0, APROP_Health);
-						SetActivatorToPlayer(PN);
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(health > 0)
-								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
 						}
-						else if(TeamPlay && PT == ClientTeam[i])
+						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
-							if(health > 0)
-								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, DEADFONT, -1, DEADMESSEAGE, height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
+						}
+						else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
+						{
+							continue;
 						}
 						else
 						{ 
@@ -264,25 +240,29 @@ Script "Player_HUD" CLIENTSIDE
 					if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 						count++;
 						
-					if(PN != i && PlayerInGame(i))
+					if(Spypn != i && PlayerInGame(i))
 					{
-						SetActivatorToPlayer(i);
-						health = GetActorProperty(0, APROP_Health);
-						SetActivatorToPlayer(PN);
-						
 						if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 						{
-							if(health > 0)
-								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
 						}
-						else if(TeamPlay && PT == ClientTeam[i])
+						else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 						{
-							if(health > 0)
-								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 0.0, autoscale, false, distance);
+							SetActivatorToPlayer(i);
+							phealth = GetActorProperty(0, APROP_Health);
+							if(phealth > 0)
+								IIIDHudMessageOnActor(PN, i, fonts, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
-								IIIDHudMessageOnActor(PN, i+65, fonts, DEADALLYMARK, "", height, 0.5, autoscale, true, distance);
+								IIIDHudMessageOnActor(PN, i, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
+						}
+						else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
+						{
+							continue;
 						}
 						else
 						{
