@@ -258,6 +258,10 @@ Script "Player_HUD" CLIENTSIDE
 							else
 								IIIDHudMessageOnActor(PN, i, Spytid, Spy, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
 						}
+						else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
+						{
+							continue;
+						}
 						else
 						{ 
 							terminate;
@@ -294,6 +298,10 @@ Script "Player_HUD" CLIENTSIDE
 								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, ALLYMARK, "", height, 1.0, autoscale, distance);
 							else
 								IIIDHudMessageOnActor(PN, i, Spytid, Spy, fonts, DEADALLYMARK, "", height, 1.0, autoscale, distance);
+						}
+						else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
+						{
+							continue;
 						}
 						else
 						{
