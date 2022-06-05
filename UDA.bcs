@@ -207,7 +207,7 @@ Script "Player_HUD" CLIENTSIDE
 		temp = GetSyncVar(GetCVar("UDA_TID"));
 		
 		if(SpyPN == -1)
-			terminate;
+			ConsolePlayerNumber();
 			
 		if(Spypn == PN)
 			Spy = false;
