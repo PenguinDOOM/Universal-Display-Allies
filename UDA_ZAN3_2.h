@@ -92,6 +92,7 @@ ACSUtils uses code from ACS-X:
 #define DEADMESSEAGE "Dead"
 #define ALLYMARK "allya0"
 #define DEADALLYMARK "UDADEADM"
+#define AAPTR_PLAYER_GETCAMERA 0x8000000
 
 fixed PX[MAX_PLAYERS][MAX_PLAYERS+65], PY[MAX_PLAYERS][MAX_PLAYERS+65], PZ[MAX_PLAYERS][MAX_PLAYERS+65];
 
@@ -139,26 +140,17 @@ fixed NonTIDActorDistance (int pn1, int pn2)
 	                      p2z - p1z);
 }
 
-int GetPlayerSpyTID (int PN)
-{	
-	SetActivator(CheckPlayerCamera(PN)); //TID assignment required
-	int SpyTID = ActivatorTID();
-	SetActivatorToPlayer(PN);
-	
-	return SpyTID;
-}
-
 int GetPlayerSpyPN (int PN)
 {
 	int SpyPN;
-	SetActivator(CheckPlayerCamera(PN)); //TID assignment required
-	SpyPN = PlayerNumber(); //TID assignment required
+	SetActivator(0, AAPTR_PLAYER_GETCAMERA);
+	SpyPN = PlayerNumber();
 	SetActivatorToPlayer(PN);
 	
 	return SpyPN;
 }
 
-void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool distance)
+void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool distance)
 {
 	fixed tic;
 	int AD;
@@ -215,7 +207,11 @@ void IIIDHudMessageOnActor(int PN, int i, int Spytid, bool Spy, str font, str sp
 	HudResetState();
 		
 		if(Spy)
-			HudSetCameraActor(Spytid);
+		{
+			SetActivator(0, AAPTR_PLAYER_GETCAMERA);
+			HudSetCameraActor(0);
+			SetActivatorToPlayer(PN);
+		}
 		else
 			HudSetCameraActor(0);
 		
