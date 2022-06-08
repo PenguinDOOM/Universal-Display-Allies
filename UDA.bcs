@@ -151,7 +151,6 @@ Script "Player_HUD" CLIENTSIDE
 		terminate;
 		
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
-	fixed height;
 	int i, Spypn, temp, phealth, count;
 	str fonts;
 	
@@ -170,7 +169,6 @@ Script "Player_HUD" CLIENTSIDE
 			Spy = true;
 		
 		autoscale = GetCVar("UDA_Distance_Scale");
-		height = GetCVar("UDA_Height");
 		distance = GetCVar("UDA_Distance");
 		
 		switch(GetCVar("UDA_Fonts"))
@@ -209,18 +207,18 @@ Script "Player_HUD" CLIENTSIDE
 						SetActivatorToPlayer(i);
 						phealth = GetActorProperty(0, APROP_Health);
 						if(phealth > 0)
-							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), 1.0, autoscale, distance);
 						else
-							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, 1.0, autoscale, distance);
 					}
 					else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 					{
 						SetActivatorToPlayer(i);
 						phealth = GetActorProperty(0, APROP_Health);
 						if(phealth > 0)
-							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), 1.0, autoscale, distance);
 						else
-							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, 1.0, autoscale, distance);
 					}
 					else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
 					{
