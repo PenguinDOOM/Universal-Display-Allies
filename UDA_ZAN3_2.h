@@ -152,7 +152,7 @@ int GetPlayerSpyPN (int PN)
 
 void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed holdtics, bool autoscale, bool distance)
 {
-	fixed tic, temp, hright;
+	fixed tic, temp, height;
 	int AD;
 	str color ;
 	
@@ -164,7 +164,7 @@ void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed ho
 	PX[PN][i] = GetActorX(0);
 	PY[PN][i] = GetActorY(0);
 	PZ[PN][i] = GetActorZ(0);
-	hright = GetActorProperty(0, APROP_Height);
+	height = GetActorProperty(0, APROP_Height);
 	SetActivatorToPlayer(PN);
 	
 	if(GetCVar("UDA_Meter"))
@@ -212,7 +212,7 @@ void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed ho
 		else
 			HudSetCameraActor(0);
 		
-		HudSetPoint3D(PX[PN][i], PY[PN][i], PZ[PN][i] + GetActorProperty(0, APROP_Height));
+		HudSetPoint3D(PX[PN][i], PY[PN][i], PZ[PN][i] + height);
 		HudSetAutoDistanceScale(autoscale);
 		HudSetShowOnFullAutomap(false);
 		HudSetCenterText(true);
