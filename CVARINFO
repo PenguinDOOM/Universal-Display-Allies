@@ -1,7 +1,4 @@
-server noarchive int UDA_SetTIDTics = 70; //The time to change the tid (tic)
-
 user bool UDA_Enable = true; //Mod switch.
-user bool UDA_Name = true; //Switching between marks and fonts.
 user float UDA_Height = 56.0; //Mark and font height.
 user int UDA_Fonts = 1; //Fonts to display.
 user bool UDA_Distance_Scale = false; //Vary the scale with distance.(not recommended)

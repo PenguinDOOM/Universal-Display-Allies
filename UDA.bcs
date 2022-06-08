@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 08/06/22
+// 09/06/22
 
 #library "UDA"
 
@@ -209,18 +209,18 @@ Script "Player_HUD" CLIENTSIDE
 						SetActivatorToPlayer(i);
 						phealth = GetActorProperty(0, APROP_Health);
 						if(phealth > 0)
-							IIIDHudMessageOnActor(PN, i, Spy, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), height, 1.0, autoscale, distance);
 						else
-							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, height, 1.0, autoscale, distance);
 					}
 					else if(TeamPlay && GetPlayerTeam(PN) == GetPlayerTeam(i))
 					{
 						SetActivatorToPlayer(i);
 						phealth = GetActorProperty(0, APROP_Health);
 						if(phealth > 0)
-							IIIDHudMessageOnActor(PN, i, Spy, fonts, -1, PlayerName(i), height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, fonts, PlayerName(i), height, 1.0, autoscale, distance);
 						else
-							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, -1, DEADMESSEAGE, height, 1.0, autoscale, distance);
+							IIIDHudMessageOnActor(PN, i, Spy, DEADFONT, DEADMESSEAGE, height, 1.0, autoscale, distance);
 					}
 					else if(TeamPlay && GetPlayerTeam(PN) != GetPlayerTeam(i))
 					{

@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 05/06/22
+// 09/06/22
 
 #ifndef UDA_HEADER
 #define UDA_HEADER
@@ -150,11 +150,10 @@ int GetPlayerSpyPN (int PN)
 	return SpyPN;
 }
 
-void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str sprite, str text, fixed height, fixed holdtics, bool autoscale, bool distance)
+void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed hright, fixed holdtics, bool autoscale, bool distance)
 {
-	fixed tic;
+	fixed tic, temp;
 	int AD;
-	fixed temp;
 	str color ;
 	
 	if(holdtics <= 0.0)
@@ -223,9 +222,7 @@ void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str sprite, str te
 		HudSetFont(font);
 		HudSetLayer(HUDMSG_LAYER_UNDERHUD);
 		
-		if(sprite != -1)
-			HudDrawImage(i+1000, sprite);
-		else if(distance)
+		if(distance)
 		{
 			if(GetCVar("UDA_Meter"))
 				HudDrawText(i+1000, StrParam(s:color, d:AD, s:"m\n\c-", s:text));
