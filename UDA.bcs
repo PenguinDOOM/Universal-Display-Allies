@@ -92,6 +92,10 @@ ACSUtils uses code from ACS-X:
 #include "zcommon.h"
 #include "bcsutils.bcs"
 using BCSUtils;
+
+strict namespace
+{
+
 #include "UDA_ZAN3_2.h"
 
 Script "Players_Count" OPEN
@@ -170,8 +174,8 @@ Script "Player_HUD" CLIENTSIDE
 		else
 			Spy = true;
 		
-		autoscale = GetCVar("UDA_Distance_Scale");
-		distance = GetCVar("UDA_Distance");
+		autoscale = bool(GetCVar("UDA_Distance_Scale"));
+		distance = bool(GetCVar("UDA_Distance"));
 		
 		switch(GetCVar("UDA_Fonts"))
 		{
@@ -235,4 +239,6 @@ Script "Player_HUD" CLIENTSIDE
 		}
 		Delay(1);
 	}
+}
+
 }
