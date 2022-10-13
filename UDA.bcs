@@ -83,7 +83,7 @@ ACSUtils uses code from ACS-X:
 --------------------------------------------------------------------------------
 */
 
-// 10/01/2022
+// 10/13/2022
 
 #library "UDA"
 
@@ -117,7 +117,7 @@ Script "Disconnect_Count" (int arg) DISCONNECT
 
 Script "Client_OPEN" OPEN CLIENTSIDE //The bot shouldn't be able to do this.
 {
-	if(!IsNetworkGame() && GameType() == GAME_SINGLE_PLAYER || !IsNetworkGame() && GameType() == GAME_NET_COOPERATIVE) //Detect multiplayer emulation
+	if((GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE) && !IsNetworkGame()) //Detect multiplayer emulation
 		terminate;
 	ACS_NamedExecuteAlways("Player_HUD", 0, 0, 0, 0);
 }
@@ -133,13 +133,9 @@ Script "Client_Enter" ENTER CLIENTSIDE
 Script "Spectator_HUD" (int player) DISCONNECT
 {
 	if(PlayerIsSpectator(player))
-	{
 		NamedExecuteClientScript("Player_HUD", player, 0, 0, 0);
-	}
-	else if(!PlayerIsSpectator(player))
-	{
+	else
 		SyncVariable(GetCVar("UDA_TID"), ClientCount());
-	}
 }
 
 Script "Player_HUD" CLIENTSIDE
@@ -151,9 +147,7 @@ Script "Player_HUD" CLIENTSIDE
 		PN = PlayerNumber();
 	if(PN == -1)
 		PN = ConsolePlayerNumber();
-	if(IsServerOnly() || PlayerIsBot(PlayerNumber()) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel"))
-		terminate;
-	if(GetCVar("deathmatch") && !GetCVar("TeamPlay") || GetCVar("LastManStanding") && !GetCVar("TeamPlay"))
+	if(IsServerOnly() || PlayerIsBot(PlayerNumber()) || GetCVar("Terminator") || GetCVar("Possession") || GetCVar("Duel") || ((GetCVar("deathmatch") || GetCVar("LastManStanding")) && !GetCVar("TeamPlay")))
 		terminate;
 		
 	bool autoscale, Spy, TeamPlay, distance, zdistance;
@@ -206,7 +200,7 @@ Script "Player_HUD" CLIENTSIDE
 				if(PlayerIsConnected(i)) //Count the number of players and optimize the loop.
 					count++;
 				
-				if(Spypn == -1 && PlayerInGame(i) || Spypn != i && PlayerInGame(i))
+				if((Spypn == -1 || Spypn != i) && PlayerInGame(i))
 				{
 					if(GameType() == GAME_SINGLE_PLAYER || GameType() == GAME_NET_COOPERATIVE)
 					{
