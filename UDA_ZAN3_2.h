@@ -90,8 +90,6 @@ ACSUtils uses code from ACS-X:
 
 #define DEADFONT "BIGFONT"
 #define DEADMESSEAGE "Dead"
-#define ALLYMARK "allya0"
-#define DEADALLYMARK "UDADEADM"
 #define AAPTR_PLAYER_GETCAMERA 0x8000000
 
 fixed PX[MAX_PLAYERS][MAX_PLAYERS+65], PY[MAX_PLAYERS][MAX_PLAYERS+65], PZ[MAX_PLAYERS][MAX_PLAYERS+65];
@@ -171,15 +169,6 @@ void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed ho
 	{
 		temp = ActorDistanceReal(pn, i);
 		AD = itrunc(temp);
-	}
-	else
-	{
-		temp = NonTIDActorDistance(pn, i);
-		AD = itrunc(temp);
-	}
-	
-	if(GetCVar("UDA_Meter"))
-	{
 		if(50 >= AD)
 			color = "\cd";
 		else if(100 >= AD && AD > 50)
@@ -191,6 +180,8 @@ void IIIDHudMessageOnActor(int PN, int i, bool Spy, str font, str text, fixed ho
 	}
 	else
 	{
+		temp = NonTIDActorDistance(pn, i);
+		AD = itrunc(temp);
 		if(1600 >= AD)
 			color = "\cd";
 		else if(3200 >= AD && AD > 1600)
